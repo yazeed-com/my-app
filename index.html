@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b8f6a"><link rel="manifest" href="/manifest.webmanifest">
+<title>دردشة</title>
+<style>
+:root{--bg:#f0f2f1;--card:#fff;--tx:#14201b;--mut:#66756e;--pr:#0b8f6a;--me:#d7f5e6;--bd:#e0e6e3}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1714;--card:#17221e;--tx:#e8f0ec;--mut:#8da197;--me:#12493a;--bd:#25342e}}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:8px 14px;background:var(--pr);color:#fff}
+button.g{background:transparent;color:var(--pr);border:1px solid var(--pr)}
+input,textarea{font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:9px 12px;min-width:0}
+#auth{max-width:340px;margin:12vh auto;padding:20px;background:var(--card);border-radius:16px;display:flex;flex-direction:column;gap:10px}
+#auth h1{margin:0;color:var(--pr)}#err{color:#c0392b;min-height:1.2em;font-size:14px}
+#app{display:none;height:100%;max-width:1100px;margin:auto;background:var(--card)}
+#side{width:320px;border-inline-end:1px solid var(--bd);display:flex;flex-direction:column}
+#sh{display:flex;gap:6px;padding:10px;border-bottom:1px solid var(--bd);align-items:center}#sh b{flex:1}
+#list{flex:1;overflow:auto}
+.ci{padding:12px 14px;border-bottom:1px solid var(--bd);cursor:pointer;display:flex;justify-content:space-between;gap:8px}
+.ci.on{background:var(--me)}.ci small{color:var(--mut);display:block;max-width:190px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bd{background:var(--pr);color:#fff;border-radius:99px;padding:0 7px;font-size:12px;height:20px}
+#main{flex:1;display:flex;flex-direction:column;min-width:0}
+#ch{padding:10px 14px;border-bottom:1px solid var(--bd);display:flex;gap:8px;align-items:center}#ch .t{flex:1}#ch small{display:block;color:var(--mut);min-height:1.3em}
+#msgs{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:5px}
+.m{max-width:78%;padding:6px 10px;border-radius:12px;background:var(--bg);align-self:flex-start;word-wrap:break-word;white-space:pre-wrap}
+.m.me{background:var(--me);align-self:flex-end}.m .n{font-size:12px;font-weight:700;color:var(--pr)}
+.m .t{font-size:11px;color:var(--mut)}.m .t span{cursor:pointer;margin-inline-start:6px}.m .rp{font-size:12px;border-inline-start:3px solid var(--pr);padding-inline-start:6px;color:var(--mut)}
+.m.del{opacity:.6;font-style:italic}.m img,.m video{max-width:100%;border-radius:8px}
+#bar{display:flex;gap:6px;padding:10px;border-top:1px solid var(--bd);flex-wrap:wrap}#bar textarea{flex:1;height:42px;resize:none}
+#rpl{width:100%;font-size:12px;color:var(--mut);display:none}
+#call{position:fixed;inset:0;background:#000d;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:9;color:#fff}
+#call video{max-width:90vw;max-height:60vh;background:#222;border-radius:12px}#lv{position:absolute;bottom:90px;inset-inline-start:12px;width:110px!important}
+dialog{border:1px solid var(--bd);border-radius:14px;background:var(--card);color:var(--tx);max-width:340px;width:90%}
+#back{display:none}
+@media(max-width:700px){#side{width:100%}#main{display:none;width:100%}#app.chat #side{display:none}#app.chat #main{display:flex}#back{display:inline-block}}
+</style></head><body>
+<div id="auth"><h1>💬 دردشة</h1>
+<input id="u" placeholder="اسم المستخدم (إنجليزي)" autocomplete="username" dir="ltr">
+<input id="nm" placeholder="الاسم الظاهر" style="display:none">
+<input id="p" type="password" placeholder="كلمة المرور (8+ أحرف)" autocomplete="current-password" dir="ltr">
+<div id="err"></div><button id="go">دخول</button><button class="g" id="sw">حساب جديد</button></div>
+
+<div id="app">
+<aside id="side"><div id="sh"><b>المحادثات</b><button class="g" id="nc">+ جديد</button><button class="g" id="st">⚙️</button></div><div id="list"></div></aside>
+<section id="main"><div id="ch"><button class="g" id="back">→</button><div class="t"><b id="ct"></b><small id="cs"></small></div>
+<button class="g" id="ca">📞</button><button class="g" id="cv">🎥</button><button class="g" id="bl">🚫</button></div>
+<div id="msgs"></div>
+<div id="bar"><div id="rpl"></div><label class="g" style="cursor:pointer;padding:8px">📎<input id="fi" type="file" hidden></label><textarea id="tx" placeholder="اكتب رسالة"></textarea><button id="sd">إرسال</button></div></section></div>
+
+<div id="call"><div id="cn"></div><video id="rv" autoplay playsinline></video><video id="lv" autoplay playsinline muted></video>
+<div><button id="ac" style="background:#27ae60">رد</button> <button id="ec" style="background:#c0392b">إنهاء</button></div></div>
+
+<dialog id="dn"><h3>محادثة جديدة</h3><input id="nu" placeholder="اسم المستخدم" dir="ltr" style="width:100%"><br><br>
+<input id="gn" placeholder="اسم المجموعة (اختياري)" style="width:100%"><small>للمجموعة: ضع عدة أسماء مفصولة بفاصلة</small><br><br>
+<button id="ndo">ابدأ</button> <button class="g" onclick="dn.close()">إلغاء</button></dialog>
+<dialog id="ds"><h3>الإعدادات والخصوصية</h3><input id="sn" placeholder="الاسم" style="width:100%"><br><br><input id="sa" placeholder="الحالة" style="width:100%"><br><br>
+<label><input type="checkbox" id="hs"> إخفاء «متصل الآن»</label><br><label><input type="checkbox" id="hr"> إيقاف علامات القراءة</label><br><br>
+<button id="sv">حفظ</button> <button class="g" id="lo">خروج</button> <button class="g" onclick="ds.close()">إغلاق</button></dialog>
+
+<script>
+const $=i=>document.getElementById(i);let T=localStorage.getItem('tk'),ME,chats=[],cur=null,ws,msgs=[],online={},typing={},reply=null,pc,callWith=null,pending=null,lstream,mode='login';
+const api=async(p,o={})=>{const r=await fetch('/api/'+p,{...o,headers:{...(o.body&&!(o.body instanceof FormData)?{'Content-Type':'application/json'}:{}),Authorization:'Bearer '+T},body:o.body&&!(o.body instanceof FormData)?JSON.stringify(o.body):o.body});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'خطأ');return j};
+$('sw').onclick=()=>{mode=mode==='login'?'reg':'login';$('nm').style.display=mode==='reg'?'':'none';$('go').textContent=mode==='reg'?'إنشاء الحساب':'دخول'};
+$('go').onclick=async()=>{try{const r=await fetch('/api/'+(mode==='reg'?'register':'login'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:$('u').value,name:$('nm').value,password:$('p').value})});const j=await r.json();if(!r.ok)throw new Error(j.error);T=j.token;localStorage.setItem('tk',T);start()}catch(e){$('err').textContent=e.message}};
+async function start(){try{ME=await api('me')}catch{localStorage.removeItem('tk');return}$('auth').style.display='none';$('app').style.display='flex';await loadChats();connect()}
+async function loadChats(){chats=await api('chats');const l=$('list');l.textContent='';chats.forEach(c=>{const d=document.createElement('div');d.className='ci'+(c.id===cur?' on':'');const a=document.createElement('div');const b=document.createElement('b');b.textContent=c.title;const s=document.createElement('small');s.textContent=c.last?(c.last.deleted?'🚫 رسالة محذوفة':c.last.text||'📎 ملف'):'';a.append(b,s);d.append(a);if(c.unread){const u=document.createElement('span');u.className='bd';u.textContent=c.unread;d.append(u)}d.onclick=()=>openChat(c.id);l.append(d)})}
+async function openChat(id){cur=id;$('app').classList.add('chat');const c=chats.find(x=>x.id===id);$('ct').textContent=c.title;msgs=await api('chats/'+id+'/messages');renderAll();readUp();loadChats();status()}
+function status(){const c=chats.find(x=>x.id===cur);if(!c)return;$('cs').textContent=typing[cur]&&Date.now()-typing[cur]<3000?'يكتب…':(c.other?(online[c.other.id]?'متصل الآن':''):c.members.length+' أعضاء');$('ca').style.display=$('cv').style.display=$('bl').style.display=c.other?'':'none'}
+setInterval(status,1000);$('back').onclick=()=>$('app').classList.remove('chat');
+function nameOf(id){const c=chats.find(x=>x.id===cur);const m=c&&c.members.find(x=>x.id===id);return m?m.name:'?'}
+function el(m){const me=m.sender===ME.id,d=document.createElement('div');d.className='m'+(me?' me':'')+(m.deleted?' del':'');
+if(!me&&chats.find(c=>c.id===cur).type==='group'){const n=document.createElement('div');n.className='n';n.textContent=nameOf(m.sender);d.append(n)}
+if(m.reply){const r=msgs.find(x=>x.id===m.reply);if(r){const e=document.createElement('div');e.className='rp';e.textContent=(r.text||'📎').slice(0,60);d.append(e)}}
+if(m.deleted){d.append('🚫 تم حذف هذه الرسالة')}else{
+if(m.file){const u='/api/files/'+m.file+'?t='+T,x=(m.fname||'').toLowerCase();let f;if(/\.(png|jpe?g|gif|webp)$/.test(x)){f=document.createElement('img');f.src=u}else if(/\.(mp4|webm)$/.test(x)){f=document.createElement('video');f.src=u;f.controls=true}else if(/\.(mp3|ogg|wav|m4a)$/.test(x)){f=document.createElement('audio');f.src=u;f.controls=true}else{f=document.createElement('a');f.href=u;f.target='_blank';f.textContent='📎 '+(m.fname||'ملف')}d.append(f)}
+if(m.text)d.append(document.createTextNode(m.text))}
+const t=document.createElement('div');t.className='t';t.textContent=new Date(m.ts).toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'})+(me&&!m.deleted?' '+['🕓','✓','✓✓'][m.status||0]:'');
+if(!m.deleted){const r=document.createElement('span');r.textContent='↩️';r.onclick=()=>{reply=m.id;$('rpl').style.display='block';$('rpl').textContent='رد على: '+(m.text||'ملف').slice(0,40)+' ✕'};t.append(r);if(me){const x=document.createElement('span');x.textContent='🗑️';x.onclick=()=>confirm('حذف للجميع؟')&&ws.send(JSON.stringify({t:'delete',id:m.id}));t.append(x)}}
+d.append(t);return d}
+function renderAll(){const b=$('msgs');b.textContent='';msgs.forEach(m=>b.append(el(m)));b.scrollTop=b.scrollHeight}
+$('rpl').onclick=()=>{reply=null;$('rpl').style.display='none'};
+function readUp(){const l=msgs.filter(m=>m.sender!==ME.id).pop();if(l&&ws&&ws.readyState===1)ws.send(JSON.stringify({t:'read',chat:cur,upto:l.id}))}
+function connect(){ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws?t='+T);ws.onclose=e=>{if(e.code!==4001)setTimeout(connect,2000)};
+ws.onmessage=async e=>{const d=JSON.parse(e.data);
+if(d.t==='msg'){if(d.m.chat===cur){msgs.push(d.m);$('msgs').append(el(d.m));$('msgs').scrollTop=1e9;if(d.m.sender!==ME.id)readUp()}else if(d.m.sender!==ME.id&&document.hidden&&Notification.permission==='granted')new Notification('رسالة جديدة');loadChats()}
+else if(d.t==='receipt'){const m=msgs.find(x=>x.id===d.id);if(m){m.status=Math.max(m.status||0,d.status);renderAll()}}
+else if(d.t==='deleted'){const m=msgs.find(x=>x.id===d.id);if(m){m.deleted=true;m.text=m.file=null;renderAll()}loadChats()}
+else if(d.t==='typing'){typing[d.chat]=Date.now();status()}
+else if(d.t==='presence'){online[d.user]=d.on;status()}
+else if(d.t==='chat')loadChats();else if(d.t==='error')alert(d.error);
+else if(d.t==='call-offer'){pending=d;$('cn').textContent='مكالمة واردة من '+(chats.flatMap(c=>c.members).find(m=>m.id===d.from)||{}).name;$('call').style.display='flex';$('ac').style.display=''}
+else if(d.t==='call-answer'&&pc)pc.setRemoteDescription(d.sdp);
+else if(d.t==='call-ice'&&pc&&d.ice)pc.addIceCandidate(d.ice).catch(()=>{});
+else if(d.t==='call-end'||d.t==='call-reject')endCall(false)}}
+function send(o){ws.send(JSON.stringify(o))}
+async function sendMsg(extra={}){const text=$('tx').value.trim();if(!text&&!extra.file)return;send({t:'send',chat:cur,text,reply,...extra});$('tx').value='';reply=null;$('rpl').style.display='none'}
+$('sd').onclick=()=>sendMsg();$('tx').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg()}};
+let lt=0;$('tx').oninput=()=>{if(Date.now()-lt>2000){lt=Date.now();send({t:'typing',chat:cur})}};
+$('fi').onchange=async e=>{const f=e.target.files[0];if(!f)return;const fd=new FormData();fd.append('f',f);try{const r=await api('upload',{method:'POST',body:fd});sendMsg(r)}catch(x){alert(x.message)}e.target.value=''};
+$('nc').onclick=()=>dn.showModal();
+$('ndo').onclick=async()=>{try{const gn=$('gn').value.trim(),names=$('nu').value.split(',').map(s=>s.trim()).filter(Boolean);const r=gn?await api('chats',{method:'POST',body:{type:'group',name:gn,usernames:names}}):await api('chats',{method:'POST',body:{type:'direct',username:names[0]}});dn.close();await loadChats();openChat(r.id)}catch(e){alert(e.message)}};
+$('bl').onclick=async()=>{const c=chats.find(x=>x.id===cur);if(c.other&&confirm('حظر '+c.other.name+'؟'))await api('block',{method:'POST',body:{user:c.other.id}})};
+$('st').onclick=()=>{$('sn').value=ME.name;$('sa').value=ME.about;$('hs').checked=!!ME.hide_seen;$('hr').checked=!!ME.hide_read;ds.showModal();if('Notification'in window)Notification.requestPermission()};
+$('sv').onclick=async()=>{await api('me',{method:'PATCH',body:{name:$('sn').value,about:$('sa').value,hide_seen:$('hs').checked,hide_read:$('hr').checked}});ME=await api('me');ds.close()};
+$('lo').onclick=()=>{localStorage.removeItem('tk');location.reload()};
+// ---- calls (WebRTC, 1:1) ----
+function mkpc(to){pc=new RTCPeerConnection({iceServers:ME.ice});callWith=to;pc.onicecandidate=e=>e.candidate&&send({t:'call-ice',to,ice:e.candidate});pc.ontrack=e=>{$('rv').srcObject=e.streams[0]};lstream.getTracks().forEach(t=>pc.addTrack(t,lstream))}
+async function startCall(video){const c=chats.find(x=>x.id===cur);if(!c.other)return;try{lstream=await navigator.mediaDevices.getUserMedia({audio:true,video})}catch{return alert('لا إذن للميكروفون/الكاميرا')}
+$('lv').srcObject=lstream;$('cn').textContent='جارٍ الاتصال بـ '+c.other.name;$('ac').style.display='none';$('call').style.display='flex';mkpc(c.other.id);const o=await pc.createOffer();await pc.setLocalDescription(o);send({t:'call-offer',to:c.other.id,sdp:o,video})}
+$('ca').onclick=()=>startCall(false);$('cv').onclick=()=>startCall(true);
+$('ac').onclick=async()=>{try{lstream=await navigator.mediaDevices.getUserMedia({audio:true,video:!!pending.video})}catch{return endCall(true)}
+$('lv').srcObject=lstream;$('ac').style.display='none';mkpc(pending.from);await pc.setRemoteDescription(pending.sdp);const a=await pc.createAnswer();await pc.setLocalDescription(a);send({t:'call-answer',to:pending.from,sdp:a});$('cn').textContent='متصل'}
+function endCall(notify){if(notify&&callWith!=null)send({t:'call-end',to:callWith});else if(notify&&pending)send({t:'call-reject',to:pending.from});if(pc)pc.close();pc=null;if(lstream)lstream.getTracks().forEach(t=>t.stop());lstream=null;callWith=null;pending=null;$('call').style.display='none';$('rv').srcObject=null}
+$('ec').onclick=()=>endCall(true);
+if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js');
+if(T)start();
+</script></body></html>
